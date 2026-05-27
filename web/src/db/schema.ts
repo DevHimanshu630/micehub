@@ -23,6 +23,12 @@ export const users = pgTable("users", {
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
+export const propertyStatus = pgEnum("property_status", [
+  "pending_approval",
+  "approved",
+  "rejected",
+]);
+
 export const properties = pgTable("properties", {
   id: uuid("id")
     .primaryKey()
@@ -31,6 +37,11 @@ export const properties = pgTable("properties", {
   city: text("city").notNull(),
   capacity: integer("capacity").notNull(),
   description: text("description"),
+  // Nullable: admin-seeded properties have no owner.
+  ownerId: text("owner_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  status: propertyStatus("status").notNull().default("pending_approval"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -38,3 +49,21 @@ export const properties = pgTable("properties", {
 
 export type Property = typeof properties.$inferSelect;
 export type NewProperty = typeof properties.$inferInsert;
+
+export const spaces = pgTable("spaces", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  capacity: integer("capacity").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Space = typeof spaces.$inferSelect;
+export type NewSpace = typeof spaces.$inferInsert;

@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { properties } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { properties, spaces } from "@/db/schema";
+import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VenueAvatar } from "../_components/venue-avatar";
@@ -21,10 +21,16 @@ export default async function VenueDetailPage({
   const [property] = await db
     .select()
     .from(properties)
-    .where(eq(properties.id, id))
+    .where(and(eq(properties.id, id), eq(properties.status, "approved")))
     .limit(1);
 
   if (!property) notFound();
+
+  const propertySpaces = await db
+    .select()
+    .from(spaces)
+    .where(eq(spaces.propertyId, property.id))
+    .orderBy(asc(spaces.createdAt));
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -65,6 +71,36 @@ export default async function VenueDetailPage({
               <p className="mt-2 whitespace-pre-line text-slate-700 dark:text-slate-300">
                 {property.description}
               </p>
+            </div>
+          ) : null}
+
+          {propertySpaces.length > 0 ? (
+            <div className="mt-8 border-t border-slate-200 pt-6 dark:border-slate-800">
+              <h2 className="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                Bookable spaces ({propertySpaces.length})
+              </h2>
+              <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
+                {propertySpaces.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex items-start justify-between gap-4 py-3"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-slate-100">
+                        {s.name}
+                      </p>
+                      {s.description ? (
+                        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+                          {s.description}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {s.capacity.toLocaleString("en-IN")} pax
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : null}
 

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { properties } from "@/db/schema";
-import { desc, ilike } from "drizzle-orm";
+import { and, desc, eq, ilike } from "drizzle-orm";
 import { CityFilter } from "./_components/city-filter";
 import { VenueCard } from "./_components/venue-card";
 
@@ -14,10 +14,15 @@ export default async function VenuesPage({
   const { city } = await searchParams;
   const trimmedCity = city?.trim();
 
+  const conditions = [eq(properties.status, "approved")];
+  if (trimmedCity) {
+    conditions.push(ilike(properties.city, `%${trimmedCity}%`));
+  }
+
   const rows = await db
     .select()
     .from(properties)
-    .where(trimmedCity ? ilike(properties.city, `%${trimmedCity}%`) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(properties.createdAt));
 
   return (

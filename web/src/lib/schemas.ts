@@ -25,3 +25,24 @@ export const propertyCreateSchema = z.object({
 });
 
 export type PropertyCreateInput = z.infer<typeof propertyCreateSchema>;
+
+export const spaceCreateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Space name must be at least 2 characters")
+    .max(100, "Space name is too long"),
+  capacity: z
+    .number({ message: "Capacity must be a number" })
+    .int("Capacity must be a whole number")
+    .positive("Capacity must be greater than zero")
+    .max(50000, "Capacity is unrealistically high"),
+  description: z
+    .string()
+    .trim()
+    .max(1000, "Description is too long")
+    .nullable()
+    .optional(),
+});
+
+export type SpaceCreateInput = z.infer<typeof spaceCreateSchema>;

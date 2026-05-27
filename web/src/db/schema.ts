@@ -137,7 +137,7 @@ export type NewRfpRecipient = typeof rfpRecipients.$inferInsert;
 
 /**
  * One quote per rfp_recipient. Money stored as integer INR rupees (no paise)
- * for MVP simplicity — switch to integer paise in Step 9 when we add payments.
+ * for MVP simplicity. Payments table below stores paise (Razorpay's unit).
  */
 export const quotes = pgTable("quotes", {
   id: uuid("id")
@@ -209,7 +209,7 @@ export type NewBooking = typeof bookings.$inferInsert;
 /**
  * One row per (booking, space, date range). The status is denormalized from
  * the parent booking so we can put it in the EXCLUDE constraint's WHERE clause.
- * The EXCLUDE constraint itself is added in scripts/add-exclude-constraint.mjs
+ * The EXCLUDE constraint itself is added in scripts/step8-migrate.mjs
  * because Drizzle's pgTable doesn't yet support EXCLUDE in its table options.
  */
 export const bookingSpaces = pgTable("booking_spaces", {
@@ -230,3 +230,34 @@ export const bookingSpaces = pgTable("booking_spaces", {
 
 export type BookingSpace = typeof bookingSpaces.$inferSelect;
 export type NewBookingSpace = typeof bookingSpaces.$inferInsert;
+
+export const paymentStatus = pgEnum("payment_status", [
+  "created",
+  "success",
+  "failed",
+]);
+
+/**
+ * One row per Razorpay order. Amount stored in paise (Razorpay's unit) to
+ * avoid floating-point and unit-conversion bugs at the boundary.
+ */
+export const payments = pgTable("payments", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  bookingId: uuid("booking_id")
+    .notNull()
+    .references(() => bookings.id, { onDelete: "cascade" }),
+  razorpayOrderId: text("razorpay_order_id").notNull().unique(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  amountPaise: integer("amount_paise").notNull(),
+  currency: text("currency").notNull().default("INR"),
+  status: paymentStatus("status").notNull().default("created"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cancelBooking, expireStaleHolds } from "../actions";
 import { HoldCountdown } from "./_components/hold-countdown";
+import { PayButton } from "./_components/pay-button";
 
 export const dynamic = "force-dynamic";
 
@@ -137,19 +138,22 @@ export default async function BookingDetailPage({
               Pay {formatINR(advance)} to confirm
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              20% advance now; balance settles after the event. Razorpay
-              integration arrives in Step 9 — for now this button is a
-              placeholder.
+              20% advance now; balance settles after the event. Powered by
+              Razorpay (test mode).
             </p>
-            <button
-              type="button"
-              disabled
-              title="Razorpay arrives in Step 9"
-              className="mt-4 cursor-not-allowed rounded-md bg-indigo-600/40 px-5 py-2.5 text-sm font-semibold text-white"
-            >
-              Pay {formatINR(advance)} advance (Step 9)
-            </button>
+            <PayButton
+              bookingId={booking.id}
+              advanceRupees={advance}
+              plannerEmail={user.email}
+            />
           </div>
+        </div>
+      ) : null}
+
+      {booking.status === "confirmed" ? (
+        <div className="mb-6 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          Payment received. Your booking is confirmed and the spaces are
+          permanently held for your dates.
         </div>
       ) : null}
 

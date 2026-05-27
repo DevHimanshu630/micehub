@@ -20,11 +20,13 @@
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",
     "@neondatabase/serverless": "^1.1.0",
+    "@react-pdf/renderer": "^4.5.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.6",
     "razorpay": "^2.9.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.12.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {

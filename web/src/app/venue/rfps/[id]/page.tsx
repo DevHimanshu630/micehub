@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import {
+  bookings,
   properties,
   quoteLineItems,
   quotes,
@@ -68,6 +69,14 @@ export default async function VenueRfpDetailPage({
         .orderBy(asc(quoteLineItems.sortOrder))
     : [];
 
+  const [existingBooking] = existingQuote
+    ? await db
+        .select({ id: bookings.id, status: bookings.status })
+        .from(bookings)
+        .where(eq(bookings.quoteId, existingQuote.id))
+        .limit(1)
+    : [];
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4">
@@ -132,6 +141,8 @@ export default async function VenueRfpDetailPage({
           submittedAt={existingQuote.createdAt}
           notes={existingQuote.notes}
           lineItems={existingLineItems}
+          bookingId={existingBooking?.id}
+          bookingStatus={existingBooking?.status}
         />
       ) : (
         <BuildQuoteCta recipientId={id} />
@@ -165,6 +176,8 @@ function SubmittedQuote({
   submittedAt,
   notes,
   lineItems,
+  bookingId,
+  bookingStatus,
 }: {
   totalAmount: number;
   submittedAt: Date;
@@ -177,6 +190,13 @@ function SubmittedQuote({
     quantity: number;
     lineTotal: number;
   }>;
+  bookingId: string | undefined;
+  bookingStatus:
+    | "pending_payment"
+    | "confirmed"
+    | "expired"
+    | "cancelled"
+    | undefined;
 }) {
   return (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900 dark:bg-emerald-950/30">
@@ -252,6 +272,29 @@ function SubmittedQuote({
             Notes
           </p>
           {notes}
+        </div>
+      ) : null}
+
+      {bookingId ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm dark:bg-slate-900">
+          <span className="text-slate-600 dark:text-slate-400">
+            Planner accepted this quote ·{" "}
+            <span className="font-medium">
+              {bookingStatus === "confirmed"
+                ? "Booking confirmed"
+                : bookingStatus === "pending_payment"
+                  ? "Awaiting payment"
+                  : bookingStatus}
+            </span>
+          </span>
+          <a
+            href={`/api/invoices/${bookingId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Download invoice (PDF)
+          </a>
         </div>
       ) : null}
     </div>

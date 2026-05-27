@@ -121,11 +121,21 @@ export default async function BookingDetailPage({
             </p>
             <p className="mt-1 text-xs text-slate-500">{property.city}</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-500">Total</p>
-            <p className="text-2xl font-bold text-slate-900 tabular-nums dark:text-slate-100">
-              {formatINR(quote.totalAmount)}
-            </p>
+          <div className="flex flex-col items-end gap-2">
+            <div>
+              <p className="text-xs text-slate-500">Total</p>
+              <p className="text-2xl font-bold text-slate-900 tabular-nums dark:text-slate-100">
+                {formatINR(quote.totalAmount)}
+              </p>
+            </div>
+            <a
+              href={`/api/invoices/${booking.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Download invoice (PDF)
+            </a>
           </div>
         </div>
       </div>

@@ -1,10 +1,15 @@
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
-export default function VenuesLayout({
+export default async function VenuesLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { userId } = await auth();
+  const signedIn = Boolean(userId);
+
   return (
     <div className="flex flex-1 flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -22,12 +27,32 @@ export default function VenuesLayout({
             >
               Browse venues
             </Link>
-            <Link
-              href="/admin/properties"
-              className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-            >
-              Admin
-            </Link>
+            {signedIn ? (
+              <>
+                <Link
+                  href="/post-auth"
+                  className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  Dashboard
+                </Link>
+                <UserButton />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="rounded-md bg-indigo-600 px-3 py-1.5 font-semibold text-white shadow-sm hover:bg-indigo-500"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

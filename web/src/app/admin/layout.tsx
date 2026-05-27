@@ -1,10 +1,14 @@
+import { requireRole } from "@/lib/auth";
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireRole("admin");
+
   return (
     <div className="flex flex-1 flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -16,18 +20,27 @@ export default function AdminLayout({
               </div>
               <span className="text-base font-semibold">MICEHub</span>
             </Link>
-            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-              Admin (temporary — no auth yet)
+            <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+              Admin
             </span>
           </div>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link
-              href="/admin/properties"
-              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-            >
-              Properties
-            </Link>
-          </nav>
+          <div className="flex items-center gap-5 text-sm">
+            <nav className="flex items-center gap-4">
+              <Link
+                href="/admin/dashboard"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/admin/properties"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Properties
+              </Link>
+            </nav>
+            <UserButton />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">

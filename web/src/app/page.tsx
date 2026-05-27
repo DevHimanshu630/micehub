@@ -1,6 +1,11 @@
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+  const signedIn = Boolean(userId);
+
   return (
     <div className="flex flex-1 flex-col bg-gradient-to-b from-slate-50 to-white text-slate-900 dark:from-slate-950 dark:to-black dark:text-slate-100">
       <header className="flex items-center justify-between px-6 py-6 sm:px-12">
@@ -17,12 +22,32 @@ export default function Home() {
           >
             Browse venues
           </Link>
-          <Link
-            href="/admin/properties"
-            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            Admin
-          </Link>
+          {signedIn ? (
+            <>
+              <Link
+                href="/post-auth"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Dashboard
+              </Link>
+              <UserButton />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -51,12 +76,14 @@ export default function Home() {
             >
               Browse venues
             </Link>
-            <a
-              href="#features"
-              className="rounded-md border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
-            >
-              Learn more
-            </a>
+            {signedIn ? null : (
+              <Link
+                href="/sign-up"
+                className="rounded-md border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+              >
+                Sign up free
+              </Link>
+            )}
           </div>
 
           <div

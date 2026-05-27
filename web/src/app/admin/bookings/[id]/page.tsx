@@ -3,6 +3,7 @@ import {
   bookingSpaces,
   bookings,
   payments,
+  payouts,
   properties,
   quoteLineItems,
   quotes,
@@ -12,10 +13,12 @@ import {
   users,
 } from "@/db/schema";
 import { formatINR } from "@/lib/format";
+import { formatCommissionPct } from "@/lib/payouts";
 import { EVENT_TYPE_LABELS } from "@/lib/schemas";
 import { asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { markBookingComplete } from "../../payouts/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +70,8 @@ export default async function AdminBookingDetailPage({
 
   const { booking, quote, property, rfp, plannerEmail } = row;
 
-  const [lineItems, bookedSpaces, paymentHistory, ownerRow] = await Promise.all(
-    [
+  const [lineItems, bookedSpaces, paymentHistory, ownerRow, payoutRow] =
+    await Promise.all([
       db
         .select()
         .from(quoteLineItems)
@@ -92,8 +95,14 @@ export default async function AdminBookingDetailPage({
             .where(eq(users.id, property.ownerId))
             .limit(1)
         : Promise.resolve([] as { email: string }[]),
-    ],
-  );
+      db
+        .select()
+        .from(payouts)
+        .where(eq(payouts.bookingId, booking.id))
+        .limit(1),
+    ]);
+
+  const payout = payoutRow[0];
 
   const ownerEmail = ownerRow[0]?.email ?? "—";
 
@@ -115,7 +124,34 @@ export default async function AdminBookingDetailPage({
         at: p.completedAt!,
         what: `Payment ${p.status} (${p.razorpayPaymentId ?? "no pid"})`,
       })),
+    ...(booking.eventCompletedAt
+      ? [
+          {
+            at: booking.eventCompletedAt,
+            what: "Event marked complete",
+          },
+        ]
+      : []),
+    ...(payout
+      ? [
+          {
+            at: payout.createdAt,
+            what: `Payout queued (net ${formatINR(payout.netRupees)})`,
+          },
+        ]
+      : []),
+    ...(payout?.releasedAt
+      ? [
+          {
+            at: payout.releasedAt,
+            what: `Payout released to venue (UTR ${payout.utr ?? "—"})`,
+          },
+        ]
+      : []),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  const canMarkComplete =
+    booking.status === "confirmed" && !booking.eventCompletedAt;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -257,6 +293,69 @@ export default async function AdminBookingDetailPage({
         )}
       </Card>
 
+      <Card title="Payout" className="mb-6">
+        {payout ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-4">
+              <Stat label="Gross" value={formatINR(payout.grossRupees)} />
+              <Stat
+                label={`Fee (${formatCommissionPct(payout.commissionBps)})`}
+                value={`−${formatINR(payout.commissionRupees)}`}
+              />
+              <Stat
+                label="Net to venue"
+                value={formatINR(payout.netRupees)}
+                emphasize
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  payout.status === "released"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                }`}
+              >
+                {payout.status}
+              </span>
+              {payout.status === "released" ? (
+                <span className="text-xs text-slate-500">
+                  UTR <span className="font-mono">{payout.utr}</span> ·{" "}
+                  {payout.releasedAt?.toLocaleString("en-IN")}
+                </span>
+              ) : (
+                <Link
+                  href="/admin/payouts?status=pending"
+                  className="text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                >
+                  Go to payout queue →
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : canMarkComplete ? (
+          <form action={markBookingComplete} className="space-y-3">
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Mark the event complete to queue the venue payout. Only do this
+              after the event has actually happened (scheduled end date{" "}
+              {formatDate(rfp.endDate)}).
+            </p>
+            <button
+              type="submit"
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+            >
+              Mark event complete
+            </button>
+          </form>
+        ) : booking.status !== "confirmed" ? (
+          <p className="text-sm text-slate-500">
+            Payouts are only created once a booking is confirmed and the event
+            is complete.
+          </p>
+        ) : null}
+      </Card>
+
       <Card title="Timeline">
         <ol className="space-y-2">
           {timeline.map((evt, i) => (
@@ -296,6 +395,33 @@ function Card({
         {title}
       </h2>
       {children}
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  emphasize = false,
+}: {
+  label: string;
+  value: string;
+  emphasize?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium tracking-wide text-slate-500 uppercase">
+        {label}
+      </p>
+      <p
+        className={`mt-0.5 text-sm tabular-nums ${
+          emphasize
+            ? "font-bold text-slate-900 dark:text-slate-100"
+            : "font-medium text-slate-700 dark:text-slate-300"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

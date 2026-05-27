@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { properties, quoteLineItems, quotes, rfpRecipients } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { quoteCreateSchema } from "@/lib/schemas";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -109,7 +110,10 @@ export async function submitQuote(
       .set({ status: "responded" })
       .where(eq(rfpRecipients.id, rfpRecipientId));
   } catch (err) {
-    console.error("Failed to submit quote:", err);
+    log.error("quote.submit_failed", err, {
+      rfpRecipientId,
+      venueId: user.id,
+    });
     return { formError: "Failed to submit quote. Please try again." };
   }
 

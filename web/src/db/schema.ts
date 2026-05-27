@@ -198,6 +198,8 @@ export const bookings = pgTable("bookings", {
     .references(() => properties.id, { onDelete: "restrict" }),
   status: bookingStatus("status").notNull().default("pending_payment"),
   holdExpiresAt: timestamp("hold_expires_at", { withTimezone: true }).notNull(),
+  // Set by admin once the event has actually taken place. Gates payout release.
+  eventCompletedAt: timestamp("event_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -311,3 +313,46 @@ export const supportMessages = pgTable("support_messages", {
 
 export type SupportMessage = typeof supportMessages.$inferSelect;
 export type NewSupportMessage = typeof supportMessages.$inferInsert;
+
+export const payoutStatus = pgEnum("payout_status", ["pending", "released"]);
+
+/**
+ * One payout per booking, created the moment an admin marks the event complete.
+ * Money in integer INR rupees (same unit as quotes.totalAmount).
+ * commissionBps stores the platform commission rate in basis points so we keep
+ * an audit trail even if the default rate changes later (1000 bps = 10%).
+ */
+export const payouts = pgTable("payouts", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  bookingId: uuid("booking_id")
+    .notNull()
+    .unique()
+    .references(() => bookings.id, { onDelete: "restrict" }),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => properties.id, { onDelete: "restrict" }),
+  // Nullable because admin-seeded properties may not have an owner yet.
+  venueOwnerId: text("venue_owner_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  grossRupees: integer("gross_rupees").notNull(),
+  commissionRupees: integer("commission_rupees").notNull(),
+  netRupees: integer("net_rupees").notNull(),
+  commissionBps: integer("commission_bps").notNull(),
+  status: payoutStatus("status").notNull().default("pending"),
+  // Set when an admin clicks "Release" — bank transfer reference + free-form note.
+  utr: text("utr"),
+  note: text("note"),
+  releasedAt: timestamp("released_at", { withTimezone: true }),
+  releasedBy: text("released_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Payout = typeof payouts.$inferSelect;
+export type NewPayout = typeof payouts.$inferInsert;

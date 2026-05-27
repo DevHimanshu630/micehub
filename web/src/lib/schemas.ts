@@ -158,3 +158,14 @@ export const supportReplySchema = z.object({
 });
 
 export type SupportReplyInput = z.infer<typeof supportReplySchema>;
+
+export const payoutReleaseSchema = z.object({
+  utr: z
+    .string()
+    .trim()
+    .min(6, "UTR / reference must be at least 6 characters")
+    .max(50, "UTR is too long"),
+  note: z.string().trim().max(500, "Note is too long").nullable().optional(),
+});
+
+export type PayoutReleaseInput = z.infer<typeof payoutReleaseSchema>;

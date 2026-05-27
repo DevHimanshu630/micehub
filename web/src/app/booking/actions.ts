@@ -11,6 +11,7 @@ import {
   spaces,
 } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { and, eq, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -139,7 +140,7 @@ export async function createBooking(
           "One or more spaces are already booked or held for these dates. Please pick a different venue or contact the planner.",
       };
     }
-    console.error("Failed to create booking:", err);
+    log.error("booking.create_failed", err, { quoteId, plannerId: user.id });
     return { formError: "Failed to create booking. Please try again." };
   }
 

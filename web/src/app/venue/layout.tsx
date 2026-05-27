@@ -45,6 +45,12 @@ export default async function VenueLayout({
                 Calendar
               </Link>
               <Link
+                href="/venue/payouts"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Payouts
+              </Link>
+              <Link
                 href="/support"
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               >

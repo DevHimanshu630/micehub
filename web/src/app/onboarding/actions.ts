@@ -9,7 +9,17 @@ import {
 } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export async function completeOnboarding(role: "planner" | "venue") {
+// Server-action arguments come from the client over a serialized boundary; the
+// TS parameter type is compile-time only. Validate at runtime so a crafted call
+// like completeOnboarding("admin") cannot self-promote to admin.
+const ALLOWED_ROLES = new Set(["planner", "venue"] as const);
+type AllowedRole = "planner" | "venue";
+
+export async function completeOnboarding(role: AllowedRole) {
+  if (!ALLOWED_ROLES.has(role as AllowedRole)) {
+    throw new Error("Invalid role");
+  }
+
   const userId = await getCurrentClerkUserId();
   if (!userId) redirect("/sign-in");
 

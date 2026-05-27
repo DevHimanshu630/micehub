@@ -16,7 +16,8 @@
     "promote-admin": "node --env-file=.env.local scripts/promote-to-admin.mjs",
     "migrate:step8": "node --env-file=.env.local scripts/step8-migrate.mjs",
     "migrate:step9": "node --env-file=.env.local scripts/step9-migrate.mjs",
-    "migrate:step11": "node --env-file=.env.local scripts/step11-migrate.mjs"
+    "migrate:step11": "node --env-file=.env.local scripts/step11-migrate.mjs",
+    "migrate:step12": "node --env-file=.env.local scripts/step12-migrate.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",

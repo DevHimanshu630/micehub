@@ -2,6 +2,7 @@ import { db } from "@/db";
 import {
   bookings,
   payments,
+  payouts,
   properties,
   supportTickets,
   users,
@@ -22,6 +23,7 @@ export default async function AdminDashboardPage() {
     [bookingStats],
     [revenueRow],
     [openTickets],
+    [pendingPayouts],
   ] = await Promise.all([
     db.select({ total: count() }).from(properties),
     db.select({ total: count() }).from(users),
@@ -39,10 +41,19 @@ export default async function AdminDashboardPage() {
       .select({ total: count() })
       .from(supportTickets)
       .where(eq(supportTickets.status, "open")),
+    db
+      .select({
+        total: count(),
+        sumNet: sql<string>`COALESCE(SUM(${payouts.netRupees}), 0)`,
+      })
+      .from(payouts)
+      .where(eq(payouts.status, "pending")),
   ]);
 
   const revenueRupees = Math.floor(Number(revenueRow?.sumPaise ?? 0) / 100);
   const openTicketsCount = openTickets?.total ?? 0;
+  const pendingPayoutsCount = pendingPayouts?.total ?? 0;
+  const pendingPayoutsTotal = Number(pendingPayouts?.sumNet ?? 0);
 
   return (
     <div>
@@ -72,6 +83,19 @@ export default async function AdminDashboardPage() {
           hint="Successful payments only"
         />
       </div>
+
+      {pendingPayoutsCount > 0 ? (
+        <Link
+          href="/admin/payouts?status=pending"
+          className="mb-6 block rounded-xl border border-indigo-200 bg-indigo-50 p-4 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30"
+        >
+          <p className="text-sm font-medium text-indigo-900 dark:text-indigo-300">
+            {pendingPayoutsCount} pending{" "}
+            {pendingPayoutsCount === 1 ? "payout" : "payouts"} totalling{" "}
+            {formatINR(pendingPayoutsTotal)} to release &rarr;
+          </p>
+        </Link>
+      ) : null}
 
       {openTicketsCount > 0 ? (
         <Link

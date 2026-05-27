@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { properties, rfpRecipients, rfps } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { rfpCreateSchema } from "@/lib/schemas";
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -105,7 +106,7 @@ export async function createRfp(
       })),
     );
   } catch (err) {
-    console.error("Failed to create RFP:", err);
+    log.error("rfp.create_failed", err, { plannerId: user.id });
     return { formError: "Failed to send RFP. Please try again." };
   }
 

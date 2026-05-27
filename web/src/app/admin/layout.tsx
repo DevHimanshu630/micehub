@@ -51,6 +51,12 @@ export default async function AdminLayout({
                 Users
               </Link>
               <Link
+                href="/admin/payouts"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                Payouts
+              </Link>
+              <Link
                 href="/admin/support"
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               >

@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { bookingSpaces, bookings, payments, quotes } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { razorpay, verifyRazorpaySignature } from "@/lib/razorpay";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -100,7 +101,10 @@ export async function createPaymentOrder(
       keyId,
     };
   } catch (err) {
-    console.error("Failed to create Razorpay order:", err);
+    log.error("payment.razorpay_order_failed", err, {
+      bookingId,
+      plannerId: user.id,
+    });
     return { ok: false, error: "Could not start payment. Please try again." };
   }
 }

@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { supportMessages, supportTickets } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { supportReplySchema, supportTicketCreateSchema } from "@/lib/schemas";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -44,7 +45,7 @@ export async function createTicket(
       body: parsed.data.body,
     });
   } catch (err) {
-    console.error("Failed to create ticket:", err);
+    log.error("support.ticket_create_failed", err, { userId: user.id });
     return { formError: "Failed to open ticket. Please try again." };
   }
 
@@ -96,7 +97,7 @@ export async function postReply(
       .set({ updatedAt: new Date() })
       .where(eq(supportTickets.id, ticketId));
   } catch (err) {
-    console.error("Failed to post reply:", err);
+    log.error("support.reply_failed", err, { ticketId, userId: user.id });
     return { formError: "Failed to send reply." };
   }
 

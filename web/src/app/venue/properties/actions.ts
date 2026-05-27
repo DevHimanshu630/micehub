@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { properties, spaces } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { propertyCreateSchema, spaceCreateSchema } from "@/lib/schemas";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -51,7 +52,7 @@ export async function createVenueProperty(
     if (!row) throw new Error("Insert returned no row");
     newId = row.id;
   } catch (err) {
-    console.error("Failed to insert venue property:", err);
+    log.error("venue.property_insert_failed", err, { venueId: user.id });
     return { formError: "Failed to save property. Please try again." };
   }
 
@@ -101,7 +102,10 @@ export async function createSpace(
   try {
     await db.insert(spaces).values({ propertyId, ...parsed.data });
   } catch (err) {
-    console.error("Failed to insert space:", err);
+    log.error("venue.space_insert_failed", err, {
+      propertyId,
+      venueId: user.id,
+    });
     return { formError: "Failed to save space. Please try again." };
   }
 

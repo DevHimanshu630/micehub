@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { properties } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { log } from "@/lib/log";
 import { propertyCreateSchema } from "@/lib/schemas";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -45,7 +46,7 @@ export async function createProperty(
     // Admin-created properties are auto-approved.
     await db.insert(properties).values({ ...parsed.data, status: "approved" });
   } catch (err) {
-    console.error("Failed to insert property:", err);
+    log.error("admin.property_insert_failed", err);
     return { formError: "Failed to save property. Please try again." };
   }
 

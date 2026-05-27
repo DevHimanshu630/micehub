@@ -2,12 +2,12 @@ import { requireRole } from "@/lib/auth";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
-export default async function VenueLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireRole("venue");
+  await requireRole("planner");
 
   return (
     <div className="flex flex-1 flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -20,23 +20,23 @@ export default async function VenueLayout({
               </div>
               <span className="text-base font-semibold">MICEHub</span>
             </Link>
-            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-              Venue
+            <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              Planner
             </span>
           </div>
           <div className="flex items-center gap-5 text-sm">
             <nav className="flex items-center gap-4">
               <Link
-                href="/venue/dashboard"
+                href="/dashboard"
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               >
-                My properties
+                My RFPs
               </Link>
               <Link
-                href="/venue/rfps"
+                href="/venues"
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               >
-                RFP inbox
+                Browse venues
               </Link>
             </nav>
             <UserButton />

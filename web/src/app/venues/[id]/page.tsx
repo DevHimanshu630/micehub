@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { properties, spaces } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth";
 import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,6 +32,9 @@ export default async function VenueDetailPage({
     .from(spaces)
     .where(eq(spaces.propertyId, property.id))
     .orderBy(asc(spaces.createdAt));
+
+  const user = await getCurrentUser();
+  const canSendRfp = user?.role === "planner";
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -113,14 +117,23 @@ export default async function VenueDetailPage({
                 year: "numeric",
               })}
             </p>
-            <button
-              type="button"
-              disabled
-              title="RFP coming in Step 6"
-              className="cursor-not-allowed rounded-md bg-indigo-600/40 px-5 py-2.5 text-sm font-semibold text-white"
-            >
-              Request a quote (coming soon)
-            </button>
+            {canSendRfp ? (
+              <Link
+                href={`/rfp/new?venue_ids=${property.id}`}
+                className="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+              >
+                Request a quote &rarr;
+              </Link>
+            ) : (
+              <Link
+                href={user ? "/" : "/sign-up"}
+                className="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+              >
+                {user
+                  ? "Sign in as Planner to quote"
+                  : "Sign up as Planner to quote"}
+              </Link>
+            )}
           </div>
         </div>
       </div>

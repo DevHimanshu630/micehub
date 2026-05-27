@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
+  date,
   integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -67,3 +69,68 @@ export const spaces = pgTable("spaces", {
 
 export type Space = typeof spaces.$inferSelect;
 export type NewSpace = typeof spaces.$inferInsert;
+
+export const eventType = pgEnum("event_type", [
+  "conference",
+  "exhibition",
+  "wedding",
+  "training",
+  "other",
+]);
+
+export const rfps = pgTable("rfps", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  plannerId: text("planner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  eventType: eventType("event_type").notNull(),
+  startDate: date("start_date", { mode: "date" }).notNull(),
+  endDate: date("end_date", { mode: "date" }).notNull(),
+  guestCount: integer("guest_count").notNull(),
+  fbNotes: text("fb_notes"),
+  avNotes: text("av_notes"),
+  otherNotes: text("other_notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Rfp = typeof rfps.$inferSelect;
+export type NewRfp = typeof rfps.$inferInsert;
+
+export const rfpRecipientStatus = pgEnum("rfp_recipient_status", [
+  "sent",
+  "viewed",
+  "responded",
+  "declined",
+]);
+
+export const rfpRecipients = pgTable(
+  "rfp_recipients",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    rfpId: uuid("rfp_id")
+      .notNull()
+      .references(() => rfps.id, { onDelete: "cascade" }),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+    status: rfpRecipientStatus("status").notNull().default("sent"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("rfp_recipients_rfp_property_unique").on(
+      table.rfpId,
+      table.propertyId,
+    ),
+  ],
+);
+
+export type RfpRecipient = typeof rfpRecipients.$inferSelect;
+export type NewRfpRecipient = typeof rfpRecipients.$inferInsert;

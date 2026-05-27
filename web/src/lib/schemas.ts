@@ -46,3 +46,52 @@ export const spaceCreateSchema = z.object({
 });
 
 export type SpaceCreateInput = z.infer<typeof spaceCreateSchema>;
+
+export const EVENT_TYPE_OPTIONS = [
+  "conference",
+  "exhibition",
+  "wedding",
+  "training",
+  "other",
+] as const;
+
+export type EventType = (typeof EVENT_TYPE_OPTIONS)[number];
+
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  conference: "Conference",
+  exhibition: "Exhibition",
+  wedding: "Wedding",
+  training: "Training",
+  other: "Other",
+};
+
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+  .transform((s) => new Date(`${s}T00:00:00Z`))
+  .refine((d) => !Number.isNaN(d.getTime()), "Invalid date");
+
+export const rfpCreateSchema = z
+  .object({
+    eventType: z.enum(EVENT_TYPE_OPTIONS, { message: "Pick an event type" }),
+    startDate: dateString,
+    endDate: dateString,
+    guestCount: z
+      .number({ message: "Guest count must be a number" })
+      .int("Guest count must be a whole number")
+      .positive("Guest count must be greater than zero")
+      .max(100000, "Guest count is unrealistically high"),
+    fbNotes: z.string().trim().max(2000).nullable().optional(),
+    avNotes: z.string().trim().max(2000).nullable().optional(),
+    otherNotes: z.string().trim().max(2000).nullable().optional(),
+    venueIds: z
+      .array(z.string().uuid("Invalid venue id"))
+      .min(1, "Pick at least one venue")
+      .max(20, "Select fewer than 20 venues at a time"),
+  })
+  .refine((data) => data.endDate >= data.startDate, {
+    message: "End date must be on or after start date",
+    path: ["endDate"],
+  });
+
+export type RfpCreateInput = z.infer<typeof rfpCreateSchema>;

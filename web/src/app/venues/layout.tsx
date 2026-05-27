@@ -35,6 +35,12 @@ export default async function VenuesLayout({
                 >
                   Dashboard
                 </Link>
+                <Link
+                  href="/support"
+                  className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  Help
+                </Link>
                 <UserButton />
               </>
             ) : (

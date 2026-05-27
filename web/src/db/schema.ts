@@ -261,3 +261,53 @@ export const payments = pgTable("payments", {
 
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
+
+export const supportTicketStatus = pgEnum("support_ticket_status", [
+  "open",
+  "resolved",
+]);
+
+/**
+ * A support ticket is one conversation between a user (planner/venue/admin)
+ * and the platform admin team. The initial message lives in support_messages
+ * as the first row.
+ */
+export const supportTickets = pgTable("support_tickets", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  openedBy: text("opened_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  subject: text("subject").notNull(),
+  status: supportTicketStatus("status").notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+});
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type NewSupportTicket = typeof supportTickets.$inferInsert;
+
+export const supportMessages = pgTable("support_messages", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => supportTickets.id, { onDelete: "cascade" }),
+  fromUserId: text("from_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type SupportMessage = typeof supportMessages.$inferSelect;
+export type NewSupportMessage = typeof supportMessages.$inferInsert;

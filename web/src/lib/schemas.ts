@@ -131,3 +131,30 @@ export const quoteCreateSchema = z.object({
 });
 
 export type QuoteCreateInput = z.infer<typeof quoteCreateSchema>;
+
+export const supportTicketCreateSchema = z.object({
+  subject: z
+    .string()
+    .trim()
+    .min(4, "Subject must be at least 4 characters")
+    .max(200, "Subject is too long"),
+  body: z
+    .string()
+    .trim()
+    .min(10, "Please describe the issue (at least 10 characters)")
+    .max(5000, "Message is too long"),
+});
+
+export type SupportTicketCreateInput = z.infer<
+  typeof supportTicketCreateSchema
+>;
+
+export const supportReplySchema = z.object({
+  body: z
+    .string()
+    .trim()
+    .min(1, "Reply cannot be empty")
+    .max(5000, "Reply is too long"),
+});
+
+export type SupportReplyInput = z.infer<typeof supportReplySchema>;

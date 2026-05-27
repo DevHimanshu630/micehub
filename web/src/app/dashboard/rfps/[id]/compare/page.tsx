@@ -12,6 +12,7 @@ import { EVENT_TYPE_LABELS } from "@/lib/schemas";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PickQuoteButton } from "./_components/pick-quote-button";
 
 export const dynamic = "force-dynamic";
 
@@ -180,14 +181,7 @@ export default async function CompareQuotesPage({
               </div>
 
               <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950">
-                <button
-                  type="button"
-                  disabled
-                  title="Booking arrives in Step 8"
-                  className="w-full cursor-not-allowed rounded-md bg-indigo-600/40 px-4 py-2 text-sm font-semibold text-white"
-                >
-                  Pick this quote (Step 8)
-                </button>
+                <PickQuoteButton quoteId={quote.id} />
               </div>
             </div>
           );

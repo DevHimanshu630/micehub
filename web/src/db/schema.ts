@@ -174,3 +174,59 @@ export const quoteLineItems = pgTable("quote_line_items", {
 
 export type QuoteLineItem = typeof quoteLineItems.$inferSelect;
 export type NewQuoteLineItem = typeof quoteLineItems.$inferInsert;
+
+export const bookingStatus = pgEnum("booking_status", [
+  "pending_payment",
+  "confirmed",
+  "expired",
+  "cancelled",
+]);
+
+export const bookings = pgTable("bookings", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  quoteId: uuid("quote_id")
+    .notNull()
+    .unique()
+    .references(() => quotes.id, { onDelete: "restrict" }),
+  plannerId: text("planner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => properties.id, { onDelete: "restrict" }),
+  status: bookingStatus("status").notNull().default("pending_payment"),
+  holdExpiresAt: timestamp("hold_expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Booking = typeof bookings.$inferSelect;
+export type NewBooking = typeof bookings.$inferInsert;
+
+/**
+ * One row per (booking, space, date range). The status is denormalized from
+ * the parent booking so we can put it in the EXCLUDE constraint's WHERE clause.
+ * The EXCLUDE constraint itself is added in scripts/add-exclude-constraint.mjs
+ * because Drizzle's pgTable doesn't yet support EXCLUDE in its table options.
+ */
+export const bookingSpaces = pgTable("booking_spaces", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  bookingId: uuid("booking_id")
+    .notNull()
+    .references(() => bookings.id, { onDelete: "cascade" }),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  startDate: date("start_date", { mode: "date" }).notNull(),
+  endDate: date("end_date", { mode: "date" }).notNull(),
+  // Mirrors parent bookings.status. Kept in sync by app code.
+  status: bookingStatus("status").notNull().default("pending_payment"),
+});
+
+export type BookingSpace = typeof bookingSpaces.$inferSelect;
+export type NewBookingSpace = typeof bookingSpaces.$inferInsert;

@@ -95,3 +95,39 @@ export const rfpCreateSchema = z
   });
 
 export type RfpCreateInput = z.infer<typeof rfpCreateSchema>;
+
+export const quoteLineItemSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(2, "Label must be at least 2 characters")
+    .max(200, "Label is too long"),
+  unitLabel: z.string().trim().max(50).nullable().optional(),
+  unitPrice: z
+    .number({ message: "Unit price must be a number" })
+    .int("Use whole rupees only (no paise)")
+    .nonnegative("Unit price cannot be negative")
+    .max(100_000_000, "Unit price is unrealistically high"),
+  quantity: z
+    .number({ message: "Quantity must be a number" })
+    .int("Quantity must be a whole number")
+    .positive("Quantity must be at least 1")
+    .max(100_000, "Quantity is unrealistically high"),
+});
+
+export type QuoteLineItemInput = z.infer<typeof quoteLineItemSchema>;
+
+export const quoteCreateSchema = z.object({
+  lineItems: z
+    .array(quoteLineItemSchema)
+    .min(1, "Add at least one line item")
+    .max(50, "Use 50 line items or fewer"),
+  notes: z
+    .string()
+    .trim()
+    .max(2000, "Notes are too long")
+    .nullable()
+    .optional(),
+});
+
+export type QuoteCreateInput = z.infer<typeof quoteCreateSchema>;

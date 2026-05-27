@@ -1,6 +1,7 @@
 import { db } from "@/db";
-import { properties, rfpRecipients, rfps } from "@/db/schema";
+import { properties, quotes, rfpRecipients, rfps } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { formatINR } from "@/lib/format";
 import { EVENT_TYPE_LABELS } from "@/lib/schemas";
 import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
@@ -14,7 +15,7 @@ const UUID_REGEX =
 const STATUS_LABELS: Record<string, string> = {
   sent: "Sent",
   viewed: "Viewed",
-  responded: "Responded",
+  responded: "Quoted",
   declined: "Declined",
 };
 
@@ -47,11 +48,15 @@ export default async function PlannerRfpDetailPage({
     .select({
       recipient: rfpRecipients,
       property: properties,
+      quote: quotes,
     })
     .from(rfpRecipients)
     .innerJoin(properties, eq(properties.id, rfpRecipients.propertyId))
+    .leftJoin(quotes, eq(quotes.rfpRecipientId, rfpRecipients.id))
     .where(eq(rfpRecipients.rfpId, rfp.id))
     .orderBy(asc(rfpRecipients.createdAt));
+
+  const quotedCount = recipients.filter((r) => r.quote !== null).length;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -91,15 +96,29 @@ export default async function PlannerRfpDetailPage({
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-lg font-semibold">
-          Sent to {recipients.length}{" "}
-          {recipients.length === 1 ? "venue" : "venues"}
-        </h2>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Quote responses will appear here once venues reply (Step 7).
-        </p>
-        <ul className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
-          {recipients.map(({ recipient, property }) => (
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Sent to {recipients.length}{" "}
+              {recipients.length === 1 ? "venue" : "venues"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {quotedCount} {quotedCount === 1 ? "venue has" : "venues have"}{" "}
+              responded with a quote.
+            </p>
+          </div>
+          {quotedCount > 0 ? (
+            <Link
+              href={`/dashboard/rfps/${rfp.id}/compare`}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+            >
+              Compare quotes ({quotedCount}) &rarr;
+            </Link>
+          ) : null}
+        </div>
+
+        <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+          {recipients.map(({ recipient, property, quote }) => (
             <li
               key={recipient.id}
               className="flex items-center justify-between py-3"
@@ -113,11 +132,18 @@ export default async function PlannerRfpDetailPage({
                 </Link>
                 <p className="text-xs text-slate-500">{property.city}</p>
               </div>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[recipient.status]}`}
-              >
-                {STATUS_LABELS[recipient.status]}
-              </span>
+              <div className="flex items-center gap-3">
+                {quote ? (
+                  <span className="text-sm font-semibold text-slate-900 tabular-nums dark:text-slate-100">
+                    {formatINR(quote.totalAmount)}
+                  </span>
+                ) : null}
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[recipient.status]}`}
+                >
+                  {STATUS_LABELS[recipient.status]}
+                </span>
+              </div>
             </li>
           ))}
         </ul>

@@ -1,8 +1,16 @@
 import { db } from "@/db";
-import { properties, rfpRecipients, rfps, users } from "@/db/schema";
+import {
+  properties,
+  quoteLineItems,
+  quotes,
+  rfpRecipients,
+  rfps,
+  users,
+} from "@/db/schema";
 import { requireRole } from "@/lib/auth";
+import { formatINR } from "@/lib/format";
 import { EVENT_TYPE_LABELS } from "@/lib/schemas";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -20,8 +28,6 @@ export default async function VenueRfpDetailPage({
   const { id } = await params;
   if (!UUID_REGEX.test(id)) notFound();
 
-  // The id is the rfp_recipients row id, not the RFP id.
-  // This ensures the venue only sees the rows linked to their own properties.
   const [row] = await db
     .select({
       recipient: rfpRecipients,
@@ -38,7 +44,7 @@ export default async function VenueRfpDetailPage({
 
   if (!row) notFound();
 
-  // Mark as viewed (best-effort, ignore concurrent updates).
+  // Mark as viewed if still 'sent'.
   if (row.recipient.status === "sent") {
     await db
       .update(rfpRecipients)
@@ -47,6 +53,20 @@ export default async function VenueRfpDetailPage({
   }
 
   const { rfp, property, plannerEmail } = row;
+
+  const [existingQuote] = await db
+    .select()
+    .from(quotes)
+    .where(eq(quotes.rfpRecipientId, id))
+    .limit(1);
+
+  const existingLineItems = existingQuote
+    ? await db
+        .select()
+        .from(quoteLineItems)
+        .where(eq(quoteLineItems.quoteId, existingQuote.id))
+        .orderBy(asc(quoteLineItems.sortOrder))
+    : [];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -106,15 +126,134 @@ export default async function VenueRfpDetailPage({
         ) : null}
       </div>
 
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Quote response coming in Step 7
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          You&apos;ll be able to build a quote with line items (space rental,
-          F&amp;B, A/V) and send it back to the planner.
+      {existingQuote ? (
+        <SubmittedQuote
+          totalAmount={existingQuote.totalAmount}
+          submittedAt={existingQuote.createdAt}
+          notes={existingQuote.notes}
+          lineItems={existingLineItems}
+        />
+      ) : (
+        <BuildQuoteCta recipientId={id} />
+      )}
+    </div>
+  );
+}
+
+function BuildQuoteCta({ recipientId }: { recipientId: string }) {
+  return (
+    <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-6 text-center dark:border-indigo-900 dark:bg-indigo-950/30">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Ready to respond?
+      </h2>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        Build a quote with line items. The planner will see your total alongside
+        any other quotes they&apos;ve received.
+      </p>
+      <Link
+        href={`/venue/rfps/${recipientId}/quote/new`}
+        className="mt-4 inline-block rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+      >
+        Build a quote &rarr;
+      </Link>
+    </div>
+  );
+}
+
+function SubmittedQuote({
+  totalAmount,
+  submittedAt,
+  notes,
+  lineItems,
+}: {
+  totalAmount: number;
+  submittedAt: Date;
+  notes: string | null;
+  lineItems: Array<{
+    id: string;
+    label: string;
+    unitLabel: string | null;
+    unitPrice: number;
+    quantity: number;
+    lineTotal: number;
+  }>;
+}) {
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900 dark:bg-emerald-950/30">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
+            Quote sent
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {submittedAt.toLocaleString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        </div>
+        <p className="text-2xl font-bold text-slate-900 tabular-nums dark:text-slate-100">
+          {formatINR(totalAmount)}
         </p>
       </div>
+
+      <div className="overflow-hidden rounded-lg border border-emerald-200 bg-white dark:border-emerald-900 dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+          <thead className="bg-slate-50 dark:bg-slate-950">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-400">
+                Item
+              </th>
+              <th className="px-4 py-2 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-400">
+                Unit price
+              </th>
+              <th className="px-4 py-2 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-400">
+                Qty
+              </th>
+              <th className="px-4 py-2 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-400">
+                Total
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            {lineItems.map((item) => (
+              <tr key={item.id}>
+                <td className="px-4 py-2 text-sm">
+                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                    {item.label}
+                  </span>
+                  {item.unitLabel ? (
+                    <span className="ml-1 text-xs text-slate-500">
+                      ({item.unitLabel})
+                    </span>
+                  ) : null}
+                </td>
+                <td className="px-4 py-2 text-right text-sm text-slate-700 tabular-nums dark:text-slate-300">
+                  {formatINR(item.unitPrice)}
+                </td>
+                <td className="px-4 py-2 text-right text-sm text-slate-700 tabular-nums dark:text-slate-300">
+                  {item.quantity}
+                </td>
+                <td className="px-4 py-2 text-right text-sm font-medium text-slate-900 tabular-nums dark:text-slate-100">
+                  {formatINR(item.lineTotal)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {notes ? (
+        <div className="mt-4 rounded-md bg-white px-3 py-2 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          <p className="mb-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Notes
+          </p>
+          {notes}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -134,3 +134,43 @@ export const rfpRecipients = pgTable(
 
 export type RfpRecipient = typeof rfpRecipients.$inferSelect;
 export type NewRfpRecipient = typeof rfpRecipients.$inferInsert;
+
+/**
+ * One quote per rfp_recipient. Money stored as integer INR rupees (no paise)
+ * for MVP simplicity — switch to integer paise in Step 9 when we add payments.
+ */
+export const quotes = pgTable("quotes", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  rfpRecipientId: uuid("rfp_recipient_id")
+    .notNull()
+    .unique()
+    .references(() => rfpRecipients.id, { onDelete: "cascade" }),
+  totalAmount: integer("total_amount").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Quote = typeof quotes.$inferSelect;
+export type NewQuote = typeof quotes.$inferInsert;
+
+export const quoteLineItems = pgTable("quote_line_items", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  quoteId: uuid("quote_id")
+    .notNull()
+    .references(() => quotes.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  unitLabel: text("unit_label"),
+  unitPrice: integer("unit_price").notNull(),
+  quantity: integer("quantity").notNull(),
+  lineTotal: integer("line_total").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export type QuoteLineItem = typeof quoteLineItems.$inferSelect;
+export type NewQuoteLineItem = typeof quoteLineItems.$inferInsert;

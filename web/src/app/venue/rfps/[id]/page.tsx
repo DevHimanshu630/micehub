@@ -1,3 +1,4 @@
+import { Badge, Card } from "@/app/_components/ui";
 import { db } from "@/db";
 import {
   bookings,
@@ -88,7 +89,7 @@ export default async function VenueRfpDetailPage({
         </Link>
       </div>
 
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <Card className="mb-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
@@ -124,7 +125,7 @@ export default async function VenueRfpDetailPage({
         </div>
 
         {rfp.otherNotes ? (
-          <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
             <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
               Other notes
             </p>
@@ -133,7 +134,7 @@ export default async function VenueRfpDetailPage({
             </p>
           </div>
         ) : null}
-      </div>
+      </Card>
 
       {existingQuote ? (
         <SubmittedQuote
@@ -277,15 +278,15 @@ function SubmittedQuote({
 
       {bookingId ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm dark:bg-slate-900">
-          <span className="text-slate-600 dark:text-slate-400">
+          <span className="flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-400">
             Planner accepted this quote ·{" "}
-            <span className="font-medium">
+            <Badge tone={bookingStatus === "confirmed" ? "emerald" : "amber"}>
               {bookingStatus === "confirmed"
                 ? "Booking confirmed"
                 : bookingStatus === "pending_payment"
                   ? "Awaiting payment"
                   : bookingStatus}
-            </span>
+            </Badge>
           </span>
           <a
             href={`/api/invoices/${bookingId}`}

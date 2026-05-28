@@ -1,3 +1,4 @@
+import { Badge, type BadgeTone, Card } from "@/app/_components/ui";
 import { db } from "@/db";
 import {
   bookingSpaces,
@@ -25,13 +26,11 @@ export const dynamic = "force-dynamic";
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const STATUS_CLASSES: Record<string, string> = {
-  pending_payment:
-    "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  confirmed:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  expired: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  cancelled: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+const STATUS_TONES: Record<string, BadgeTone> = {
+  pending_payment: "amber",
+  confirmed: "emerald",
+  expired: "slate",
+  cancelled: "rose",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -171,11 +170,9 @@ export default async function AdminBookingDetailPage({
               <h1 className="text-2xl font-bold tracking-tight">
                 {property.name}
               </h1>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[booking.status]}`}
-              >
-                {STATUS_LABELS[booking.status]}
-              </span>
+              <Badge tone={STATUS_TONES[booking.status] ?? "slate"}>
+                {STATUS_LABELS[booking.status] ?? booking.status}
+              </Badge>
             </div>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               {EVENT_TYPE_LABELS[rfp.eventType]} ·{" "}
@@ -271,17 +268,17 @@ export default async function AdminBookingDetailPage({
                   <span className="font-mono text-xs text-slate-500">
                     {p.razorpayOrderId}
                   </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  <Badge
+                    tone={
                       p.status === "success"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                        ? "emerald"
                         : p.status === "failed"
-                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
-                          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
+                          ? "rose"
+                          : "slate"
+                    }
                   >
                     {p.status}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
                   {formatINR(Math.floor(p.amountPaise / 100))} ·{" "}
@@ -309,15 +306,9 @@ export default async function AdminBookingDetailPage({
               />
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  payout.status === "released"
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                }`}
-              >
+              <Badge tone={payout.status === "released" ? "emerald" : "amber"}>
                 {payout.status}
-              </span>
+              </Badge>
               {payout.status === "released" ? (
                 <span className="text-xs text-slate-500">
                   UTR <span className="font-mono">{payout.utr}</span> ·{" "}
@@ -374,27 +365,6 @@ export default async function AdminBookingDetailPage({
           ))}
         </ol>
       </Card>
-    </div>
-  );
-}
-
-function Card({
-  title,
-  children,
-  className,
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className ?? ""}`}
-    >
-      <h2 className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-        {title}
-      </h2>
-      {children}
     </div>
   );
 }

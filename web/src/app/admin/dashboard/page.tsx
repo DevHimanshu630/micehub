@@ -7,9 +7,18 @@ import {
   supportTickets,
   users,
 } from "@/db/schema";
+import { PageHeader, StatCard } from "@/app/_components/ui";
 import { requireRole } from "@/lib/auth";
 import { formatINR } from "@/lib/format";
 import { count, eq, inArray, sql } from "drizzle-orm";
+import {
+  Building2,
+  CalendarCheck,
+  IndianRupee,
+  LifeBuoy,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -57,38 +66,46 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Admin dashboard</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Marketplace overview.
-        </p>
-      </div>
+      <PageHeader title="Admin dashboard" description="Marketplace overview." />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
+        <StatCard
           label="Properties"
           value={propStats?.total ?? 0}
           href="/admin/properties"
+          icon={Building2}
+          tone="indigo"
         />
-        <Stat label="Users" value={userStats?.total ?? 0} href="/admin/users" />
-        <Stat
+        <StatCard
+          label="Users"
+          value={userStats?.total ?? 0}
+          href="/admin/users"
+          icon={Users}
+          tone="slate"
+        />
+        <StatCard
           label="Active bookings"
           value={bookingStats?.total ?? 0}
           href="/admin/bookings"
           hint="Pending payment + confirmed"
+          icon={CalendarCheck}
+          tone="amber"
         />
-        <Stat
+        <StatCard
           label="Revenue collected"
           value={formatINR(revenueRupees)}
           hint="Successful payments only"
+          icon={IndianRupee}
+          tone="emerald"
         />
       </div>
 
       {pendingPayoutsCount > 0 ? (
         <Link
           href="/admin/payouts?status=pending"
-          className="mb-6 block rounded-xl border border-indigo-200 bg-indigo-50 p-4 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30"
+          className="mb-6 flex items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30"
         >
+          <Wallet className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
           <p className="text-sm font-medium text-indigo-900 dark:text-indigo-300">
             {pendingPayoutsCount} pending{" "}
             {pendingPayoutsCount === 1 ? "payout" : "payouts"} totalling{" "}
@@ -100,8 +117,9 @@ export default async function AdminDashboardPage() {
       {openTicketsCount > 0 ? (
         <Link
           href="/admin/support"
-          className="mb-6 block rounded-xl border border-amber-200 bg-amber-50 p-4 transition hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30"
+          className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 transition hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30"
         >
+          <LifeBuoy className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-sm font-medium text-amber-900 dark:text-amber-300">
             {openTicketsCount} open support{" "}
             {openTicketsCount === 1 ? "ticket" : "tickets"} need attention
@@ -132,32 +150,4 @@ export default async function AdminDashboardPage() {
       </div>
     </div>
   );
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-  href,
-}: {
-  label: string;
-  value: string | number;
-  hint?: string;
-  href?: string;
-}) {
-  const content = (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {value}
-      </p>
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
-    </div>
-  );
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
-  return content;
 }

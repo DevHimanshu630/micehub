@@ -1,7 +1,15 @@
 import { StatusBadge } from "@/app/_components/status-badge";
+import {
+  EmptyState,
+  PageHeader,
+  TableShell,
+  Td,
+  Th,
+} from "@/app/_components/ui";
 import { db } from "@/db";
 import { properties, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { Building2 } from "lucide-react";
 import Link from "next/link";
 import { approveProperty, rejectProperty } from "./actions";
 
@@ -47,108 +55,105 @@ export default async function PropertiesListPage({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {rows.length === 0
-              ? "No properties match this filter."
-              : `${rows.length} ${rows.length === 1 ? "property" : "properties"}`}
-            {filter !== "all"
-              ? ` (${FILTER_LABELS[filter].toLowerCase()})`
-              : ""}
-          </p>
-        </div>
-        <Link
-          href="/admin/properties/new"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-        >
-          + Add property
-        </Link>
-      </div>
+      <PageHeader
+        title="Properties"
+        description={`${
+          rows.length === 0
+            ? "No properties match this filter."
+            : `${rows.length} ${rows.length === 1 ? "property" : "properties"}`
+        }${
+          filter !== "all" ? ` (${FILTER_LABELS[filter].toLowerCase()})` : ""
+        }`}
+        action={
+          <Link
+            href="/admin/properties/new"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+          >
+            + Add property
+          </Link>
+        }
+      />
 
       <FilterTabs active={filter} />
 
       {rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            No properties to show.
-          </p>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="No properties to show"
+          description="No properties match this filter. Try a different status or add a new property."
+        />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-            <thead className="bg-slate-50 dark:bg-slate-950">
-              <tr>
-                <Th>Name</Th>
-                <Th>City</Th>
-                <Th align="right">Capacity</Th>
-                <Th>Owner</Th>
-                <Th>Status</Th>
-                <Th align="right">Actions</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {rows.map(({ property: p, ownerEmail }) => (
-                <tr
-                  key={p.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-950"
-                >
-                  <Td>
-                    <div className="font-medium text-slate-900 dark:text-slate-100">
-                      {p.name}
+        <TableShell>
+          <thead>
+            <tr>
+              <Th>Name</Th>
+              <Th>City</Th>
+              <Th align="right">Capacity</Th>
+              <Th>Owner</Th>
+              <Th>Status</Th>
+              <Th align="right">Actions</Th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            {rows.map(({ property: p, ownerEmail }) => (
+              <tr
+                key={p.id}
+                className="hover:bg-slate-50 dark:hover:bg-slate-950"
+              >
+                <Td>
+                  <div className="font-medium text-slate-900 dark:text-slate-100">
+                    {p.name}
+                  </div>
+                  {p.description ? (
+                    <div className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+                      {p.description}
                     </div>
-                    {p.description ? (
-                      <div className="mt-0.5 line-clamp-1 text-xs text-slate-500">
-                        {p.description}
-                      </div>
-                    ) : null}
-                  </Td>
-                  <Td>{p.city}</Td>
-                  <Td align="right">{p.capacity.toLocaleString("en-IN")}</Td>
-                  <Td>
-                    {ownerEmail ? (
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {ownerEmail}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </Td>
-                  <Td>
-                    <StatusBadge status={p.status} />
-                  </Td>
-                  <Td align="right">
-                    {p.status === "pending_approval" ? (
-                      <div className="flex justify-end gap-2">
-                        <form action={approveProperty}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <button
-                            type="submit"
-                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-500"
-                          >
-                            Approve
-                          </button>
-                        </form>
-                        <form action={rejectProperty}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <button
-                            type="submit"
-                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                          >
-                            Reject
-                          </button>
-                        </form>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  ) : null}
+                </Td>
+                <Td>{p.city}</Td>
+                <Td align="right">{p.capacity.toLocaleString("en-IN")}</Td>
+                <Td>
+                  {ownerEmail ? (
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                      {ownerEmail}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400">—</span>
+                  )}
+                </Td>
+                <Td>
+                  <StatusBadge status={p.status} />
+                </Td>
+                <Td align="right">
+                  {p.status === "pending_approval" ? (
+                    <div className="flex justify-end gap-2">
+                      <form action={approveProperty}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-500"
+                        >
+                          Approve
+                        </button>
+                      </form>
+                      <form action={rejectProperty}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                          Reject
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400">—</span>
+                  )}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </TableShell>
       )}
     </div>
   );
@@ -182,37 +187,5 @@ function FilterTabs({ active }: { active: StatusFilter }) {
         );
       })}
     </div>
-  );
-}
-
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
-  return (
-    <th
-      className={`px-4 py-2.5 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-400 ${align === "right" ? "text-right" : "text-left"}`}
-    >
-      {children}
-    </th>
-  );
-}
-
-function Td({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
-  return (
-    <td
-      className={`px-4 py-3 text-sm text-slate-700 dark:text-slate-300 ${align === "right" ? "text-right" : "text-left"}`}
-    >
-      {children}
-    </td>
   );
 }

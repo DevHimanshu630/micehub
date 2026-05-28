@@ -1,3 +1,4 @@
+import { PageHeader } from "@/app/_components/ui";
 import { expireStaleHolds } from "@/app/booking/actions";
 import { db } from "@/db";
 import { bookingSpaces, bookings, properties, spaces } from "@/db/schema";
@@ -112,12 +113,10 @@ export default async function VenueCalendarPage({
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Held and confirmed bookings across your properties.
-        </p>
-      </div>
+      <PageHeader
+        title="Calendar"
+        description="Held and confirmed bookings across your properties."
+      />
 
       <CalendarMonth
         year={year}

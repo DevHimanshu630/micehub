@@ -1,3 +1,4 @@
+import { Badge, Card } from "@/app/_components/ui";
 import { setTicketStatus } from "@/app/support/actions";
 import { ReplyForm } from "@/app/support/_components/reply-form";
 import { db } from "@/db";
@@ -51,7 +52,7 @@ export default async function AdminSupportDetailPage({
         </Link>
       </div>
 
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <Card className="mb-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight">
@@ -63,15 +64,9 @@ export default async function AdminSupportDetailPage({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                ticket.status === "resolved"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-              }`}
-            >
+            <Badge tone={ticket.status === "resolved" ? "emerald" : "amber"}>
               {ticket.status}
-            </span>
+            </Badge>
             <form action={setTicketStatus}>
               <input type="hidden" name="id" value={ticket.id} />
               <input
@@ -88,7 +83,7 @@ export default async function AdminSupportDetailPage({
             </form>
           </div>
         </div>
-      </div>
+      </Card>
 
       <ul className="mb-6 space-y-3">
         {messages.map(({ message, authorEmail, authorRole }) => (

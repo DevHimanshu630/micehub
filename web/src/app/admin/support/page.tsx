@@ -1,15 +1,11 @@
+import { Badge, EmptyState, PageHeader } from "@/app/_components/ui";
 import { db } from "@/db";
 import { supportTickets, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { Inbox } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_CLASSES: Record<string, string> = {
-  open: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  resolved:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-};
 
 export default async function AdminSupportInboxPage({
   searchParams,
@@ -37,12 +33,10 @@ export default async function AdminSupportInboxPage({
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Support inbox</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {rows.length} {rows.length === 1 ? "ticket" : "tickets"} ({filter}).
-        </p>
-      </div>
+      <PageHeader
+        title="Support inbox"
+        description={`${rows.length} ${rows.length === 1 ? "ticket" : "tickets"} (${filter}).`}
+      />
 
       <div className="mb-4 flex gap-2">
         {(["open", "resolved", "all"] as const).map((f) => {
@@ -65,14 +59,13 @@ export default async function AdminSupportInboxPage({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Nothing here. Open tickets will appear with the most recently
-            updated first.
-          </p>
-        </div>
+        <EmptyState
+          icon={Inbox}
+          title="Nothing here"
+          description="Open tickets will appear with the most recently updated first."
+        />
       ) : (
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+        <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
           {rows.map(({ ticket, openerEmail, openerRole }) => (
             <li key={ticket.id}>
               <Link
@@ -89,10 +82,12 @@ export default async function AdminSupportInboxPage({
                     {ticket.updatedAt.toLocaleString("en-IN")}
                   </p>
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[ticket.status]}`}
-                >
-                  {ticket.status}
+                <span className="shrink-0">
+                  <Badge
+                    tone={ticket.status === "resolved" ? "emerald" : "amber"}
+                  >
+                    {ticket.status}
+                  </Badge>
                 </span>
               </Link>
             </li>

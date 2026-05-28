@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  AMENITY_OPTIONS,
+  OWNERSHIP_OPTIONS,
+  VENUE_TYPE_OPTIONS,
+} from "./venue-meta";
 
 export const propertyCreateSchema = z.object({
   name: z
@@ -11,6 +16,12 @@ export const propertyCreateSchema = z.object({
     .trim()
     .min(2, "City is required")
     .max(100, "City name is too long"),
+  address: z
+    .string()
+    .trim()
+    .max(300, "Address is too long")
+    .nullable()
+    .optional(),
   capacity: z
     .number({ message: "Capacity must be a number" })
     .int("Capacity must be a whole number")
@@ -22,6 +33,9 @@ export const propertyCreateSchema = z.object({
     .max(2000, "Description is too long")
     .nullable()
     .optional(),
+  venueType: z.enum(VENUE_TYPE_OPTIONS, { message: "Pick a venue type" }),
+  ownership: z.enum(OWNERSHIP_OPTIONS, { message: "Pick an ownership type" }),
+  amenities: z.array(z.enum(AMENITY_OPTIONS)).max(AMENITY_OPTIONS.length),
 });
 
 export type PropertyCreateInput = z.infer<typeof propertyCreateSchema>;

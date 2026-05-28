@@ -10,7 +10,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 type FieldErrors = Partial<
-  Record<"name" | "city" | "capacity" | "description", string[]>
+  Record<
+    | "name"
+    | "city"
+    | "address"
+    | "capacity"
+    | "description"
+    | "venueType"
+    | "ownership"
+    | "amenities",
+    string[]
+  >
 >;
 
 export type CreatePropertyState = {
@@ -33,8 +43,12 @@ export async function createProperty(
   const parsed = propertyCreateSchema.safeParse({
     name: formData.get("name"),
     city: formData.get("city"),
+    address: formData.get("address") || null,
     capacity,
     description: formData.get("description") || null,
+    venueType: formData.get("venueType"),
+    ownership: formData.get("ownership"),
+    amenities: formData.getAll("amenities"),
   });
 
   if (!parsed.success) {

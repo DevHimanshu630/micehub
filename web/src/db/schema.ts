@@ -31,14 +31,39 @@ export const propertyStatus = pgEnum("property_status", [
   "rejected",
 ]);
 
+export const venueType = pgEnum("venue_type", [
+  "convention_centre",
+  "auditorium",
+  "exhibition_hall",
+  "hotel_ballroom",
+  "standalone_hall",
+  "other",
+]);
+
+export const ownershipType = pgEnum("ownership_type", [
+  "government",
+  "private",
+  "hotel_brand",
+  "other",
+]);
+
 export const properties = pgTable("properties", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   city: text("city").notNull(),
+  // Full street address (e.g. "Sector 25, Dwarka"). Nullable for older rows.
+  address: text("address"),
   capacity: integer("capacity").notNull(),
   description: text("description"),
+  venueType: venueType("venue_type").notNull().default("other"),
+  ownership: ownershipType("ownership").notNull().default("private"),
+  // Canonical amenity slugs (see AMENITY_OPTIONS in lib/schemas).
+  amenities: text("amenities")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   // Nullable: admin-seeded properties have no owner.
   ownerId: text("owner_id").references(() => users.id, {
     onDelete: "set null",

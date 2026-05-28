@@ -12,7 +12,16 @@ import { redirect } from "next/navigation";
 export type FieldErrors<K extends string> = Partial<Record<K, string[]>>;
 
 export type CreateVenuePropertyState = {
-  fieldErrors?: FieldErrors<"name" | "city" | "capacity" | "description">;
+  fieldErrors?: FieldErrors<
+    | "name"
+    | "city"
+    | "address"
+    | "capacity"
+    | "description"
+    | "venueType"
+    | "ownership"
+    | "amenities"
+  >;
   formError?: string;
 } | null;
 
@@ -31,8 +40,12 @@ export async function createVenueProperty(
   const parsed = propertyCreateSchema.safeParse({
     name: formData.get("name"),
     city: formData.get("city"),
+    address: formData.get("address") || null,
     capacity,
     description: formData.get("description") || null,
+    venueType: formData.get("venueType"),
+    ownership: formData.get("ownership"),
+    amenities: formData.getAll("amenities"),
   });
 
   if (!parsed.success) {

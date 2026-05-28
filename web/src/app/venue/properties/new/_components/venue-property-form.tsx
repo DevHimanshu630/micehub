@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  AMENITY_OPTIONS,
+  AMENITY_LABELS,
+  OWNERSHIP_OPTIONS,
+  OWNERSHIP_LABELS,
+  VENUE_TYPE_OPTIONS,
+  VENUE_TYPE_LABELS,
+} from "@/lib/venue-meta";
 import Link from "next/link";
 import { useActionState } from "react";
 import {
@@ -21,21 +29,75 @@ export function VenuePropertyForm() {
         placeholder="The Grand Convention Centre"
         error={state?.fieldErrors?.name?.[0]}
       />
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Field
+          label="City"
+          name="city"
+          placeholder="Mumbai"
+          error={state?.fieldErrors?.city?.[0]}
+        />
+        <SelectField
+          label="Venue type"
+          name="venueType"
+          options={VENUE_TYPE_OPTIONS.map((v) => ({
+            value: v,
+            label: VENUE_TYPE_LABELS[v],
+          }))}
+          error={state?.fieldErrors?.venueType?.[0]}
+        />
+      </div>
+
       <Field
-        label="City"
-        name="city"
-        placeholder="Mumbai"
-        error={state?.fieldErrors?.city?.[0]}
+        label="Full address (optional)"
+        name="address"
+        placeholder="Sector 25, Dwarka, New Delhi 110061"
+        error={state?.fieldErrors?.address?.[0]}
       />
-      <Field
-        label="Headline capacity"
-        name="capacity"
-        type="number"
-        min={1}
-        placeholder="500"
-        hint="The largest single-event capacity. You can add specific hall capacities next."
-        error={state?.fieldErrors?.capacity?.[0]}
-      />
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Field
+          label="Headline capacity"
+          name="capacity"
+          type="number"
+          min={1}
+          placeholder="500"
+          hint="Largest single-event capacity."
+          error={state?.fieldErrors?.capacity?.[0]}
+        />
+        <SelectField
+          label="Ownership"
+          name="ownership"
+          options={OWNERSHIP_OPTIONS.map((v) => ({
+            value: v,
+            label: OWNERSHIP_LABELS[v],
+          }))}
+          error={state?.fieldErrors?.ownership?.[0]}
+        />
+      </div>
+
+      <fieldset>
+        <legend className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          Amenities
+        </legend>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {AMENITY_OPTIONS.map((a) => (
+            <label
+              key={a}
+              className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:has-[:checked]:border-indigo-600 dark:has-[:checked]:bg-indigo-950/40"
+            >
+              <input
+                type="checkbox"
+                name="amenities"
+                value={a}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              {AMENITY_LABELS[a]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <Field
         label="Description (optional)"
         name="description"
@@ -128,6 +190,50 @@ function Field({
       {hint && !error ? (
         <p className="mt-1 text-xs text-slate-500">{hint}</p>
       ) : null}
+      {error ? (
+        <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  name,
+  options,
+  error,
+}: {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+  error?: string;
+}) {
+  const borderClasses = error
+    ? "border-rose-400 focus:ring-rose-500"
+    : "border-slate-300 dark:border-slate-700";
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        defaultValue=""
+        className={`block w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:bg-slate-900 dark:text-slate-100 ${borderClasses}`}
+      >
+        <option value="" disabled>
+          Select…
+        </option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
       {error ? (
         <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>
       ) : null}

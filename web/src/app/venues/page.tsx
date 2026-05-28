@@ -10,6 +10,7 @@ import {
   and,
   arrayContains,
   asc,
+  count,
   desc,
   eq,
   gte,
@@ -19,7 +20,13 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import { Building2, MapPin, SearchX } from "lucide-react";
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  SearchX,
+} from "lucide-react";
 import Link from "next/link";
 import { FilterRail } from "./_components/filter-rail";
 import { VenueGridSelectable } from "./_components/venue-grid-selectable";
@@ -36,6 +43,8 @@ const SORT_OPTIONS = [
 
 type SortKey = (typeof SORT_OPTIONS)[number]["value"];
 
+const PAGE_SIZE = 12;
+
 type RawParams = {
   city?: string;
   min_capacity?: string;
@@ -44,6 +53,7 @@ type RawParams = {
   amenities?: string | string[];
   ownership?: string | string[];
   sort?: string;
+  page?: string;
 };
 
 function toArray<T extends string>(
@@ -82,6 +92,7 @@ export default async function VenuesPage({
   const amenities = toArray(params.amenities, AMENITY_OPTIONS);
   const ownership = toArray(params.ownership, OWNERSHIP_OPTIONS);
   const sort = parseSort(params.sort);
+  const page = Math.max(1, parsePositiveInt(params.page) ?? 1);
 
   const conditions: SQL[] = [eq(properties.status, "approved")];
   if (city) conditions.push(ilike(properties.city, `%${city}%`));
@@ -106,11 +117,21 @@ export default async function VenuesPage({
     }
   })();
 
+  const [countRow] = await db
+    .select({ total: count() })
+    .from(properties)
+    .where(and(...conditions));
+  const total = countRow?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
   const rows = await db
     .select()
     .from(properties)
     .where(and(...conditions))
-    .orderBy(orderBy);
+    .orderBy(orderBy)
+    .limit(PAGE_SIZE)
+    .offset((currentPage - 1) * PAGE_SIZE);
 
   // Real capacity range per property, derived from its bookable spaces.
   const capacityRanges: Record<string, CapacityRange> = {};
@@ -136,8 +157,8 @@ export default async function VenuesPage({
   const user = await getCurrentUser();
   const canSendRfp = user?.role === "planner";
 
-  // Build a sort-tab href that preserves the active filters.
-  function sortHref(value: SortKey): string {
+  // Build an href that preserves active filters, with optional overrides.
+  function hrefWith(overrides: { sort?: SortKey; page?: number }): string {
     const qs = new URLSearchParams();
     if (city) qs.set("city", city);
     if (minCap !== undefined) qs.set("min_capacity", String(minCap));
@@ -145,9 +166,14 @@ export default async function VenuesPage({
     for (const t of types) qs.append("type", t);
     for (const a of amenities) qs.append("amenities", a);
     for (const o of ownership) qs.append("ownership", o);
-    qs.set("sort", value);
+    qs.set("sort", overrides.sort ?? sort);
+    const nextPage = overrides.page ?? 1;
+    if (nextPage > 1) qs.set("page", String(nextPage));
     return `/venues?${qs.toString()}`;
   }
+
+  const rangeStart = total === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (currentPage - 1) * PAGE_SIZE + rows.length;
 
   return (
     <div>
@@ -180,9 +206,15 @@ export default async function VenuesPage({
               <Building2 className="h-4 w-4 text-slate-400" />
               <span>
                 <strong className="font-semibold text-slate-900 dark:text-slate-100">
-                  {rows.length}
+                  {total}
                 </strong>{" "}
-                {rows.length === 1 ? "venue" : "venues"} found
+                {total === 1 ? "venue" : "venues"} found
+                {total > PAGE_SIZE ? (
+                  <span className="text-slate-400">
+                    {" "}
+                    · showing {rangeStart}–{rangeEnd}
+                  </span>
+                ) : null}
               </span>
             </p>
             <div className="flex flex-wrap gap-1">
@@ -191,7 +223,7 @@ export default async function VenuesPage({
                 return (
                   <Link
                     key={opt.value}
-                    href={sortHref(opt.value)}
+                    href={hrefWith({ sort: opt.value })}
                     className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                       active
                         ? "bg-indigo-600 text-white"
@@ -232,6 +264,42 @@ export default async function VenuesPage({
               ))}
             </div>
           )}
+
+          {totalPages > 1 ? (
+            <nav className="mt-6 flex items-center justify-center gap-2">
+              {currentPage > 1 ? (
+                <Link
+                  href={hrefWith({ page: currentPage - 1 })}
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev
+                </Link>
+              ) : (
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-300 dark:border-slate-800 dark:text-slate-700">
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev
+                </span>
+              )}
+              <span className="px-2 text-sm text-slate-600 dark:text-slate-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              {currentPage < totalPages ? (
+                <Link
+                  href={hrefWith({ page: currentPage + 1 })}
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-300 dark:border-slate-800 dark:text-slate-700">
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              )}
+            </nav>
+          ) : null}
         </div>
       </div>
     </div>

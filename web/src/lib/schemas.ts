@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AMENITY_OPTIONS,
   OWNERSHIP_OPTIONS,
+  SPACE_OFFERING_OPTIONS,
   VENUE_TYPE_OPTIONS,
 } from "./venue-meta";
 
@@ -57,6 +58,9 @@ export const spaceCreateSchema = z.object({
     .max(1000, "Description is too long")
     .nullable()
     .optional(),
+  offerings: z
+    .array(z.enum(SPACE_OFFERING_OPTIONS))
+    .max(SPACE_OFFERING_OPTIONS.length),
 });
 
 export type SpaceCreateInput = z.infer<typeof spaceCreateSchema>;

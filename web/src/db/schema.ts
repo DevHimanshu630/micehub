@@ -87,6 +87,11 @@ export const spaces = pgTable("spaces", {
   name: text("name").notNull(),
   capacity: integer("capacity").notNull(),
   description: text("description"),
+  // Per-space offerings (see SPACE_OFFERING_OPTIONS in lib/venue-meta).
+  offerings: text("offerings")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

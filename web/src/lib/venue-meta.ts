@@ -64,6 +64,40 @@ export const AMENITY_LABELS: Record<Amenity, string> = {
   stage: "Stage & Backdrop",
 };
 
+// Per-space offerings (more granular than property-level amenities — these
+// describe a specific hall/room).
+export const SPACE_OFFERING_OPTIONS = [
+  "projector",
+  "sound_system",
+  "stage",
+  "natural_light",
+  "pillarless",
+  "dance_floor",
+  "air_conditioning",
+  "wheelchair_access",
+  "breakout_rooms",
+  "podium",
+] as const;
+
+export type SpaceOffering = (typeof SPACE_OFFERING_OPTIONS)[number];
+
+export const SPACE_OFFERING_LABELS: Record<SpaceOffering, string> = {
+  projector: "Projector & Screen",
+  sound_system: "Sound System",
+  stage: "Stage",
+  natural_light: "Natural Light",
+  pillarless: "Pillarless Hall",
+  dance_floor: "Dance Floor",
+  air_conditioning: "Air Conditioning",
+  wheelchair_access: "Wheelchair Access",
+  breakout_rooms: "Breakout Rooms",
+  podium: "Podium",
+};
+
+export function spaceOfferingLabel(value: string): string {
+  return SPACE_OFFERING_LABELS[value as SpaceOffering] ?? value;
+}
+
 export function venueTypeLabel(value: string): string {
   return VENUE_TYPE_LABELS[value as VenueType] ?? "Venue";
 }

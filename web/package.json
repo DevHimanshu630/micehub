@@ -19,7 +19,8 @@
     "migrate:step11": "node --env-file=.env.local scripts/step11-migrate.mjs",
     "migrate:step12": "node --env-file=.env.local scripts/step12-migrate.mjs",
     "migrate:venue-metadata": "node --env-file=.env.local scripts/migrate-venue-metadata.mjs",
-    "migrate:indexes": "node --env-file=.env.local scripts/migrate-indexes.mjs"
+    "migrate:indexes": "node --env-file=.env.local scripts/migrate-indexes.mjs",
+    "migrate:space-offerings": "node --env-file=.env.local scripts/migrate-space-offerings.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",

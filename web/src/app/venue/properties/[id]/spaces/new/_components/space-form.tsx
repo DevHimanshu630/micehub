@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  SPACE_OFFERING_LABELS,
+  SPACE_OFFERING_OPTIONS,
+} from "@/lib/venue-meta";
 import Link from "next/link";
 import { useActionState } from "react";
 import { createSpace, type CreateSpaceState } from "../../../../actions";
@@ -27,6 +31,28 @@ export function SpaceForm({ propertyId }: { propertyId: string }) {
         placeholder="200"
         error={state?.fieldErrors?.capacity?.[0]}
       />
+      <fieldset>
+        <legend className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          What this space offers
+        </legend>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {SPACE_OFFERING_OPTIONS.map((o) => (
+            <label
+              key={o}
+              className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:has-[:checked]:border-indigo-600 dark:has-[:checked]:bg-indigo-950/40"
+            >
+              <input
+                type="checkbox"
+                name="offerings"
+                value={o}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              {SPACE_OFFERING_LABELS[o]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <Field
         label="Description (optional)"
         name="description"

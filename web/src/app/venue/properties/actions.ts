@@ -74,7 +74,7 @@ export async function createVenueProperty(
 }
 
 export type CreateSpaceState = {
-  fieldErrors?: FieldErrors<"name" | "capacity" | "description">;
+  fieldErrors?: FieldErrors<"name" | "capacity" | "description" | "offerings">;
   formError?: string;
 } | null;
 
@@ -106,6 +106,7 @@ export async function createSpace(
     name: formData.get("name"),
     capacity,
     description: formData.get("description") || null,
+    offerings: formData.getAll("offerings"),
   });
 
   if (!parsed.success) {

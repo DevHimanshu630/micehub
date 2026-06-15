@@ -56,21 +56,6 @@ export async function createBooking(
   const user = await requireRole("planner");
   await expireStaleHolds();
 
-  // If a non-expired booking already exists for this quote, jump to it.
-  const [existingBooking] = await db
-    .select()
-    .from(bookings)
-    .where(eq(bookings.quoteId, quoteId))
-    .limit(1);
-
-  if (
-    existingBooking &&
-    (existingBooking.status === "pending_payment" ||
-      existingBooking.status === "confirmed")
-  ) {
-    redirect(`/booking/${existingBooking.id}`);
-  }
-
   // Load the quote + RFP + property to confirm ownership and get dates.
   const [data] = await db
     .select({
@@ -89,6 +74,56 @@ export async function createBooking(
     return { formError: "Quote not found or not yours." };
   }
 
+  const holdExpiresAt = new Date(Date.now() + HOLD_DURATION_MS);
+
+  // bookings.quote_id is UNIQUE, so at most one booking row ever exists per
+  // quote. Decide what to do with it before attempting any insert.
+  const [existingBooking] = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.quoteId, quoteId))
+    .limit(1);
+
+  if (existingBooking) {
+    // Active hold or already paid: just jump back to it.
+    if (
+      existingBooking.status === "pending_payment" ||
+      existingBooking.status === "confirmed"
+    ) {
+      redirect(`/booking/${existingBooking.id}`);
+    }
+
+    // Stale ('expired') or 'cancelled': revive the SAME row instead of
+    // inserting a second booking (which would violate the unique quote_id and
+    // crash). Re-arm the held spaces first so the EXCLUDE constraint re-checks
+    // them against any other active holds.
+    try {
+      await db
+        .update(bookingSpaces)
+        .set({ status: "pending_payment" })
+        .where(eq(bookingSpaces.bookingId, existingBooking.id));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("booking_spaces_no_overlap")) {
+        return {
+          formError:
+            "One or more spaces are already booked or held for these dates. Please pick a different venue or contact the planner.",
+        };
+      }
+      log.error("booking.revive_failed", err, { quoteId, plannerId: user.id });
+      return { formError: "Failed to create booking. Please try again." };
+    }
+
+    await db
+      .update(bookings)
+      .set({ status: "pending_payment", holdExpiresAt })
+      .where(eq(bookings.id, existingBooking.id));
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/venue/calendar`);
+    redirect(`/booking/${existingBooking.id}`);
+  }
+
   const propertySpaces = await db
     .select({ id: spaces.id })
     .from(spaces)
@@ -103,8 +138,6 @@ export async function createBooking(
 
   // Attempt the insert. The EXCLUDE constraint at the DB level will throw if
   // any space is already held/confirmed for an overlapping date range.
-  const holdExpiresAt = new Date(Date.now() + HOLD_DURATION_MS);
-
   const [bookingRow] = await db
     .insert(bookings)
     .values({

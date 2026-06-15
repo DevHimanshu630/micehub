@@ -31,6 +31,7 @@ type NavItem = {
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   planner: [
     { href: "/dashboard", label: "My RFPs", icon: FileText },
+    { href: "/dashboard/calendar", label: "Calendar", icon: CalendarDays },
     { href: "/venues", label: "Browse venues", icon: Search },
     { href: "/support", label: "Help & support", icon: LifeBuoy },
   ],
@@ -88,9 +89,17 @@ export function AppShell({
   const items = NAV_BY_ROLE[role];
   const roleMeta = ROLE_META[role];
 
+  // A nav item matches when the path equals it or sits underneath it. When
+  // several match (e.g. "/dashboard" and "/dashboard/calendar"), the most
+  // specific (longest) href wins so only one item highlights.
+  const activeHref = items
+    .filter(
+      (it) => pathname === it.href || pathname.startsWith(it.href + "/"),
+    )
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   function isActive(href: string) {
-    if (pathname === href) return true;
-    return pathname.startsWith(href + "/");
+    return href === activeHref;
   }
 
   const activeItem = items.find((it) => isActive(it.href));

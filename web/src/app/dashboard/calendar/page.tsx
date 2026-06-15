@@ -1,10 +1,10 @@
+import { CalendarMonth } from "@/app/_components/calendar-month";
 import { PageHeader } from "@/app/_components/ui";
 import { expireStaleHolds } from "@/app/booking/actions";
 import { db } from "@/db";
 import { bookingSpaces, bookings, properties, spaces } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
-import { CalendarMonth } from "@/app/_components/calendar-month";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +27,12 @@ function isoDate(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-export default async function VenueCalendarPage({
+export default async function PlannerCalendarPage({
   searchParams,
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  const user = await requireRole("venue");
+  const user = await requireRole("planner");
   const { month: monthParam } = await searchParams;
   const { year, month } = parseMonth(monthParam);
 
@@ -57,7 +57,7 @@ export default async function VenueCalendarPage({
     .innerJoin(bookings, eq(bookings.id, bookingSpaces.bookingId))
     .where(
       and(
-        eq(properties.ownerId, user.id),
+        eq(bookings.plannerId, user.id),
         inArray(bookingSpaces.status, ["pending_payment", "confirmed"]),
         lte(bookingSpaces.startDate, gridEnd),
         gte(bookingSpaces.endDate, gridStart),
@@ -115,7 +115,7 @@ export default async function VenueCalendarPage({
     <div>
       <PageHeader
         title="Calendar"
-        description="Held and confirmed bookings across your properties."
+        description="Your held and confirmed bookings across all venues."
       />
 
       <CalendarMonth
@@ -124,7 +124,8 @@ export default async function VenueCalendarPage({
         dotsByDate={dotsByDate}
         prevMonth={prevMonth}
         nextMonth={nextMonth}
-        basePath="/venue/calendar"
+        basePath="/dashboard/calendar"
+        primary="property"
       />
     </div>
   );

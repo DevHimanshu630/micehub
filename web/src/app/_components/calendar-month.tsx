@@ -12,12 +12,19 @@ export function CalendarMonth({
   dotsByDate,
   prevMonth,
   nextMonth,
+  basePath,
+  primary = "space",
 }: {
   year: number;
   month: number;
   dotsByDate: Map<string, BookingDot[]>;
   prevMonth: { year: number; month: number };
   nextMonth: { year: number; month: number };
+  // Route the navigation links back to the calling page (venue or planner).
+  basePath: string;
+  // Which name to show on the dot. Venues own the property, so the space name
+  // differentiates; planners care about which venue, so show the property.
+  primary?: "space" | "property";
 }) {
   const firstOfMonth = new Date(Date.UTC(year, month, 1));
   const startWeekday = firstOfMonth.getUTCDay(); // 0 = Sunday
@@ -49,20 +56,20 @@ export function CalendarMonth({
         <h2 className="text-xl font-semibold">{monthLabel}</h2>
         <div className="flex items-center gap-2">
           <Link
-            href={`/venue/calendar?month=${formatYM(prevMonth)}`}
+            href={`${basePath}?month=${formatYM(prevMonth)}`}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label="Previous month"
           >
             ←
           </Link>
           <Link
-            href="/venue/calendar"
+            href={basePath}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Today
           </Link>
           <Link
-            href={`/venue/calendar?month=${formatYM(nextMonth)}`}
+            href={`${basePath}?month=${formatYM(nextMonth)}`}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label="Next month"
           >
@@ -121,7 +128,7 @@ export function CalendarMonth({
                             : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                         }`}
                       >
-                        {dot.spaceName}
+                        {primary === "property" ? dot.propertyName : dot.spaceName}
                       </div>
                     ))}
                     {dots.length > 3 ? (

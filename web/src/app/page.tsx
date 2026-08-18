@@ -426,30 +426,47 @@ function HowItWorks() {
         description="MICEHub replaces the email chains, phone tag and spreadsheets that MICE bookings usually run on. Here is the entire journey, end to end."
       />
 
+      {/*
+        Three layouts, because a five-across row can't survive a phone:
+        - <640px  vertical timeline — icon left, copy right, dashed rail joining
+                  the steps. Stacking icon *above* copy here left the right half
+                  of every row empty and made each step read as its own island.
+        - 640px+  same horizontal step, two per row.
+        - 1024px+ five across, icon above copy, dashed rail running horizontally.
+      */}
       <div className="relative mt-14">
-        {/* Connector line running behind the icons on wide screens. */}
         <div
           aria-hidden
-          className="absolute top-7 right-[10%] left-[10%] hidden border-t-2 border-dashed border-slate-200 lg:block dark:border-slate-800"
+          className="absolute top-7 right-[10%] left-[10%] hidden border-t-2 border-dashed border-slate-200 lg:block"
         />
 
-        <ol className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+        <ol className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-10 lg:grid-cols-5 lg:gap-6">
           {STEPS.map((step, i) => {
             const Icon = step.icon;
+            const isLast = i === STEPS.length - 1;
             return (
-              <li key={step.title} className="relative">
-                <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white text-indigo-600 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-indigo-400">
+              <li key={step.title} className="relative flex gap-4 lg:block">
+                {/* Rail joining this step to the next — single-column only. */}
+                {isLast ? null : (
+                  <span
+                    aria-hidden
+                    className="absolute top-16 -bottom-8 left-7 border-l-2 border-dashed border-slate-200 sm:hidden"
+                  />
+                )}
+
+                <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-indigo-600 shadow-sm">
                   <Icon className="h-6 w-6" />
                   <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
                     {i + 1}
                   </span>
                 </div>
-                <div className="mt-5">
+
+                <div className="min-w-0 lg:mt-5">
                   <ActorBadge actor={step.actor}>{step.actorLabel}</ActorBadge>
-                  <h3 className="mt-2.5 text-base font-semibold text-slate-900 dark:text-slate-100">
+                  <h3 className="mt-2 text-base font-semibold text-slate-900">
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-sm text-pretty text-slate-600 dark:text-slate-400">
+                  <p className="mt-1.5 text-sm text-pretty text-slate-600">
                     {step.body}
                   </p>
                 </div>

@@ -20,6 +20,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -227,13 +228,28 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
         onMouseLeave={scheduleClose}
       >
         <div className="flex h-16 items-center gap-2">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-base font-bold text-white">
-              M
-            </span>
+          <Link href="/" className="flex shrink-0 items-center gap-3">
+            {/*
+              Home-page header only — wordmark left, logo right, divided by a
+              hairline rule. The dashboard sidebar and invoice PDF still use
+              the "M" mark.
+              The source PNG is palette-encoded with no alpha, so it carries a
+              solid white background. `mix-blend-multiply` drops that white
+              against the light header instead of showing a white block when
+              content scrolls behind the translucent bar.
+            */}
             <span className="font-display text-lg font-bold tracking-tight text-slate-900">
               MICEHub
             </span>
+            <span aria-hidden className="h-8 w-px shrink-0 bg-slate-300" />
+            <Image
+              src="/images.png"
+              alt="MICEHub"
+              width={232}
+              height={217}
+              priority
+              className="h-10 w-auto mix-blend-multiply"
+            />
           </Link>
 
           {/* Desktop nav */}

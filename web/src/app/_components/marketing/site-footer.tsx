@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -46,11 +47,16 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-base font-bold text-white">
-                M
-              </span>
-              <span className="text-lg font-semibold tracking-tight">
+            <Link href="/" className="flex items-center gap-2.5">
+              {/* Home-page footer. See site-nav.tsx for why mix-blend-multiply. */}
+              <Image
+                src="/images.png"
+                alt="MICEHub"
+                width={232}
+                height={217}
+                className="h-10 w-auto mix-blend-multiply"
+              />
+              <span className="font-display text-lg font-bold tracking-tight text-slate-900">
                 MICEHub
               </span>
             </Link>

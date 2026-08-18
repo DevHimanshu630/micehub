@@ -22,6 +22,14 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    // Marketing imagery on the landing page is served from the Unsplash CDN.
+    // Swap these for owned/licensed photography (or S3) before public launch —
+    // see the `MARKETING_IMAGES` map in src/app/_components/marketing/images.ts.
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+    ],
+  },
   async headers() {
     return [
       {

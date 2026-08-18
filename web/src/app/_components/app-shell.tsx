@@ -93,9 +93,7 @@ export function AppShell({
   // several match (e.g. "/dashboard" and "/dashboard/calendar"), the most
   // specific (longest) href wins so only one item highlights.
   const activeHref = items
-    .filter(
-      (it) => pathname === it.href || pathname.startsWith(it.href + "/"),
-    )
+    .filter((it) => pathname === it.href || pathname.startsWith(it.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   function isActive(href: string) {

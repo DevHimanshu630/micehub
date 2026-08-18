@@ -128,7 +128,9 @@ export function CalendarMonth({
                             : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                         }`}
                       >
-                        {primary === "property" ? dot.propertyName : dot.spaceName}
+                        {primary === "property"
+                          ? dot.propertyName
+                          : dot.spaceName}
                       </div>
                     ))}
                     {dots.length > 3 ? (

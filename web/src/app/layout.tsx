@@ -31,7 +31,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MICEHub — India's MICE Booking Platform",
+  title: "MiceLog — India's MICE Booking Platform",
   description:
     "Book conference halls, banquet venues, and event spaces across India. Send RFPs, compare quotes, and confirm bookings — all in one place.",
 };

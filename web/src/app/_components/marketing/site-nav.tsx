@@ -230,17 +230,23 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
         <div className="flex h-16 items-center gap-2">
           <Link href="/" className="flex shrink-0 items-center gap-3">
             {/*
-              Home-page header only — wordmark left, logo right, divided by a
-              hairline rule. The dashboard sidebar and invoice PDF still use
-              the "M" mark.
-              The source PNG is palette-encoded with no alpha, so it carries a
-              solid white background. `mix-blend-multiply` drops that white
-              against the light header instead of showing a white block when
-              content scrolls behind the translucent bar.
+              Home-page header only — MiceLog wordmark left, mark right, split
+              by a hairline rule. The footer, dashboard sidebar and invoice PDF
+              are unchanged.
+              Neither source file has an alpha channel (JPEG, and a palette PNG
+              with no tRNS), so both carry a solid white background.
+              `mix-blend-multiply` drops that white against the light header
+              instead of showing white blocks when content scrolls behind the
+              translucent bar.
             */}
-            <span className="font-display text-lg font-bold tracking-tight text-slate-900">
-              MICEHub
-            </span>
+            <Image
+              src="/micelogo.jpeg"
+              alt="MiceLog"
+              width={1346}
+              height={431}
+              priority
+              className="h-7 w-auto mix-blend-multiply sm:h-8"
+            />
             <span aria-hidden className="h-8 w-px shrink-0 bg-slate-300" />
             <Image
               src="/images.png"
